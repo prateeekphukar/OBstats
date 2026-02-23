@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — AI Signal Engine</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #1a1f2e;
+            --border: #2a3040;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #6366f1;
+            --accent-purple: #8b5cf6;
+            --green: #00e676;
+            --red: #ff1744;
+            --yellow: #ffd740;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 30% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .nav {
+            background: rgba(26, 31, 46, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .nav-logo span {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Profile Header */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .avatar-wrap {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 16px;
+        }
+
+        .avatar-ring {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-blue), var(--accent-purple), var(--green), var(--accent-blue));
+            animation: spinRing 4s linear infinite;
+        }
+
+        @keyframes spinRing {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .avatar-img {
+            position: relative;
+            z-index: 2;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 3px solid var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            overflow: hidden;
+        }
+
+        .avatar-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-header h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .profile-header p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 3px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        /* Panels */
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .info-card {
+            background: rgba(26, 31, 46, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .info-card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-row .label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .info-row .value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .info-row .value.green {
+            color: var(--green);
+        }
+
+        .info-row .value.red {
+            color: var(--red);
+        }
+
+        .info-row .value.yellow {
+            color: var(--yellow);
+        }
+
+        .btn-upgrade {
+            display: inline-block;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-upgrade:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .contact-placeholder {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .contact-placeholder a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        .flash-msg {
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .flash-msg.success {
+            background: rgba(0, 230, 118, 0.1);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            color: var(--green);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="/" class="nav-logo"><span>⚡</span> AI Signal Engine</a>
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/blog">Blog</a>
+                <a href="/profile" class="active">Profile</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="flash-msg {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+        {% endwith %}
+
+        <div class="profile-header">
+            <div class="avatar-wrap">
+                <div class="avatar-ring"></div>
+                <div class="avatar-img">
+                    {% if user.profile_photo %}
+                    <img src="{{ user.profile_photo }}" alt="Profile">
+                    {% else %}
+                    👤
+                    {% endif %}
+                </div>
+            </div>
+            <h2>{{ user.name }}</h2>
+            <p>{{ user.email }}</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('subscription')">Subscription</button>
+            <button class="tab" onclick="switchTab('account')">Account Details</button>
+            <button class="tab" onclick="switchTab('contact')">Contact</button>
+        </div>
+
+        <!-- Subscription Panel -->
+        <div class="panel active" id="panel-subscription">
+            <div class="info-card">
+                <h3>Current Plan</h3>
+                <div class="info-row">
+                    <div class="label">Plan</div>
+                    <div class="value {% if user.has_active_subscription %}green{% else %}yellow{% endif %}">
+                        {{ user.plan_display }}
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="label">Status</div>
+                    <div class="value {% if user.has_active_subscription %}green{% else %}red{% endif %}">
+                        {{ 'Active ✓' if user.has_active_subscription else 'Inactive' }}
+                    </div>
+                </div>
+                {% if user.subscription_expires_at %}
+                <div class="info-row">
+                    <div class="label">Expires</div>
+                    <div class="value">{{ user.subscription_expires_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+                </div>
+                {% endif %}
+                <div style="margin-top: 16px;">
+                    <a href="/pricing" class="btn-upgrade">
+                        {{ 'Upgrade Plan' if user.has_active_subscription else 'Get Started →' }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Details Panel -->
+        <div class="panel" id="panel-account">
+            <div class="info-card">
+                <h3>Account Information</h3>
+                <div class="info-row">
+                    <div class="label">Name</div>
+                    <div class="value">{{ user.name }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="label">Email</div>
+                    <div class="value">{{ user.email }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="label">Member Since</div>
+                    <div class="value">{{ user.created_at.strftime('%d %b %Y') }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="label">Auth Method</div>
+                    <div class="value">
+                        {% if user.google_id %}Google OAuth{% elif user.facebook_id %}Facebook{% else %}Email &
+                        Password{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>Last Login Details</h3>
+                <div class="info-row">
+                    <div class="label">Last Login</div>
+                    <div class="value">{{ user.last_login.strftime('%d %b %Y, %I:%M %p IST') if user.last_login else
+                        'N/A' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="label">IP Address</div>
+                    <div class="value">{{ user.last_login_ip or 'N/A' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="label">Device / Browser</div>
+                    <div class="value" style="font-size: 11px; max-width: 400px; word-break: break-all;">{{
+                        user.last_login_device or 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Panel -->
+        <div class="panel" id="panel-contact">
+            <div class="info-card">
+                <h3>Need Help?</h3>
+                <div class="contact-placeholder">
+                    📧 Reach us at <a href="mailto:support@aisignalengine.com">support@aisignalengine.com</a>
+                    <br><br>
+                    We typically respond within 24 hours during market days.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('panel-' + tabName).classList.add('active');
+        }
+    </script>
+</body>
+
+</html>

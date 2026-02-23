@@ -1,0 +1,129 @@
+# ──────────────────────────────────────────────
+# Options HFT Bot - Strategy Settings
+# ──────────────────────────────────────────────
+
+strategy:
+  name: "vol_arb_surface"
+  description: "Volatility Arbitrage + Surface Anomaly Detection"
+
+  # IV vs Realized Vol thresholds
+  iv_rv_sell_threshold: 1.25       # Sell vol when IV/RV > this
+  iv_rv_buy_threshold: 0.80        # Buy vol when IV/RV < this
+
+  # Volatility surface anomaly
+  surface_anomaly_threshold: 0.02  # IV deviation from neighbors (absolute)
+
+  # Realized vol window
+  realized_vol_window: 20          # Bars for realized vol computation
+
+  # Signal filtering
+  min_signal_strength: 1.2
+  max_signals_per_cycle: 5
+  min_option_volume: 100           # Minimum daily volume to consider
+  min_open_interest: 500           # Minimum OI to consider
+
+# ──────────────────────────────────────────────
+# Broker Settings
+# ──────────────────────────────────────────────
+
+broker:
+  # Set to "dhan" or "interactive_brokers" or "paper"
+  name: "dhan"
+
+  # ── Dhan Broker Settings ──
+  dhan:
+    client_id: ""                  # Your Dhan Client ID
+    access_token: ""               # Your Dhan API Access Token
+    exchange_segment: "NSE_FNO"    # NSE_FNO | BSE_FNO | MCX_COMM
+    product_type: "INTRA"          # INTRA | CNC | MARGIN
+
+  # ── Interactive Brokers Settings ──
+  ib:
+    host: "127.0.0.1"
+    port: 7497                     # 7496=live, 7497=paper
+    client_id: 1
+    account: ""
+    timeout: 30
+
+# ──────────────────────────────────────────────
+# Data Feed Settings
+# ──────────────────────────────────────────────
+
+data_feed:
+  provider: "dhan"                 # "dhan" or "interactive_brokers"
+  symbols:
+    - "NIFTY"
+    - "BANKNIFTY"
+    - "FINNIFTY"
+  # Dhan-specific: underlying security IDs
+  dhan_underlyings:
+    NIFTY: 13
+    BANKNIFTY: 25
+    FINNIFTY: 27
+  strike_range_pct: 0.05           # ±5% from ATM
+  expirations_max: 4               # Max number of expirations to track
+  update_interval_ms: 200
+  subscription_type: "Full"        # Ticker | Quote | Full
+
+# ──────────────────────────────────────────────
+# Pricing Engine
+# ──────────────────────────────────────────────
+
+pricing:
+  model: "black_scholes"
+  risk_free_rate: 0.065            # India RBI repo rate (approx)
+  dividend_yield: 0.012            # NIFTY approx dividend yield
+
+# ──────────────────────────────────────────────
+# Execution Settings
+# ──────────────────────────────────────────────
+
+execution:
+  order_type: "LIMIT"
+  price_offset_bps: 5              # Offset from mid for limit orders
+  stale_order_timeout_sec: 5       # Cancel unfilled orders after N seconds
+  max_retry_attempts: 3
+
+# ──────────────────────────────────────────────
+# Storage
+# ──────────────────────────────────────────────
+
+storage:
+  engine: "sqlite"                 # sqlite | parquet | timescaledb
+  sqlite_path: "data/ticks.db"
+  parquet_dir: "data/parquet/"
+
+# ──────────────────────────────────────────────
+# Logging
+# ──────────────────────────────────────────────
+
+logging:
+  level: "INFO"
+  log_file: "logs/bot.log"
+  log_trades: true
+  log_signals: true
+
+# ──────────────────────────────────────────────
+# Backtesting Database
+# ──────────────────────────────────────────────
+
+backtest_db:
+  db_path: "data/backtest.db"
+  default_symbol: "NIFTY"
+  bar_interval: "5min"             # 5-minute bars
+  available_symbols:
+    indices:
+      - "NIFTY"
+      - "NIFTY50"
+      - "BANKNIFTY"
+    stocks:
+      - "RELIANCE"
+      - "TCS"
+      - "INFY"
+      - "HDFCBANK"
+      - "ICICIBANK"
+      - "SBIN"
+      - "BHARTIARTL"
+      - "ITC"
+      - "KOTAKBANK"
+      - "LT"

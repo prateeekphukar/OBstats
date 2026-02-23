@@ -1,0 +1,44 @@
+# ──────────────────────────────────────────────
+# Options HFT Bot - Risk Limits Configuration
+# ──────────────────────────────────────────────
+
+# Position Limits
+position_limits:
+  max_total_contracts: 50          # Max open contracts across all positions
+  max_contracts_per_symbol: 20     # Max per underlying
+  max_contracts_per_strike: 10     # Max per individual strike
+  max_single_expiry_pct: 0.40     # 40% max concentration in one expiry
+
+# P&L Limits
+pnl_limits:
+  max_daily_loss: 5000.0           # USD - triggers kill switch
+  max_weekly_loss: 15000.0         # USD - reduce size
+  max_unrealized_loss: 3000.0      # USD per position
+  profit_target_daily: 10000.0     # USD - optional reduce activity
+
+# Greeks Limits (portfolio-level)
+greeks_limits:
+  max_portfolio_delta: 100         # Absolute delta exposure
+  max_portfolio_gamma: 50          # Absolute gamma exposure
+  max_portfolio_vega: 500          # Absolute vega exposure
+  max_portfolio_theta: -200        # Max theta bleed per day
+
+# Rate Limits
+rate_limits:
+  max_trades_per_minute: 30
+  max_orders_per_second: 5
+  max_cancels_per_minute: 50
+
+# Kill Switch Thresholds
+kill_switch:
+  enabled: true
+  max_daily_loss: 5000.0           # Same as pnl limit — hard stop
+  max_daily_trades: 500            # Emergency if runaway
+  max_consecutive_losses: 10       # Cool-down trigger
+  cool_down_minutes: 15            # Pause duration after trigger
+
+# Slippage & Commission (for backtesting & real-time P&L)
+costs:
+  commission_per_contract: 0.65    # USD
+  slippage_bps: 5                  # Basis points
+  exchange_fee_per_contract: 0.30  # USD

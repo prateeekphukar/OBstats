@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading Signals — Live Dashboard</title>
+    <meta name="description" content="Real-time AI-powered intraday trading signals for NSE F&O stocks">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-card-hover: #222838;
+            --border: #2a3040;
+            --border-glow: rgba(99, 102, 241, 0.3);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #6366f1;
+            --accent-purple: #8b5cf6;
+            --green: #00e676;
+            --green-muted: #69f0ae;
+            --red: #ff1744;
+            --red-muted: #ff6e40;
+            --yellow: #ffd740;
+            --cyan: #00e5ff;
+            --gradient-bull: linear-gradient(135deg, #00c853, #00e676);
+            --gradient-bear: linear-gradient(135deg, #d50000, #ff1744);
+            --gradient-neutral: linear-gradient(135deg, #ff8f00, #ffd740);
+            --gradient-header: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            --glow-green: 0 0 20px rgba(0, 230, 118, 0.15);
+            --glow-red: 0 0 20px rgba(255, 23, 68, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Animated background ── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(0, 230, 118, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--gradient-header);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #e2e8f0, #a5b4fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Index bar */
+        .index-bar {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .index-pill {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .index-pill .name {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .index-pill .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .index-pill .change {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            font-size: 11px;
+        }
+
+        .index-pill .change.up {
+            color: var(--green);
+        }
+
+        .index-pill .change.down {
+            color: var(--red);
+        }
+
+        /* Status bar */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .market-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .market-badge.live {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--green);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+        }
+
+        .market-badge.closed {
+            background: rgba(255, 23, 68, 0.1);
+            color: var(--red);
+            border: 1px solid rgba(255, 23, 68, 0.2);
+        }
+
+        .market-badge.preopen {
+            background: rgba(255, 215, 64, 0.1);
+            color: var(--yellow);
+            border: 1px solid rgba(255, 215, 64, 0.2);
+        }
+
+        .market-badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .timer {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .timer span {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .btn-refresh {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: var(--accent-blue);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-refresh:hover {
+            background: rgba(99, 102, 241, 0.25);
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-refresh:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ── Signal cards grid ── */
+        .signals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+            gap: 16px;
+            padding: 24px 0;
+        }
+
+        .signal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .signal-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .signal-card.strong-buy {
+            border-left: 3px solid var(--green);
+            box-shadow: var(--glow-green);
+        }
+
+        .signal-card.buy {
+            border-left: 3px solid var(--green-muted);
+        }
+
+        .signal-card.neutral {
+            border-left: 3px solid var(--yellow);
+        }
+
+        .signal-card.sell {
+            border-left: 3px solid var(--red-muted);
+        }
+
+        .signal-card.strong-sell {
+            border-left: 3px solid var(--red);
+            box-shadow: var(--glow-red);
+        }
+
+        /* Card header */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 16px 18px 10px;
+        }
+
+        .card-title-area {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .card-symbol {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .card-sector {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .card-score-area {
+            text-align: right;
+        }
+
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .signal-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* Price row */
+        .price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            padding: 0 18px;
+            margin-bottom: 10px;
+        }
+
+        .price-main {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .price-change {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .price-change.up {
+            color: var(--green);
+        }
+
+        .price-change.down {
+            color: var(--red);
+        }
+
+        /* Levels grid */
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            margin: 0 18px 12px;
+            background: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .level-item {
+            background: var(--bg-secondary);
+            padding: 8px;
+            text-align: center;
+        }
+
+        .level-label {
+            font-size: 9px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .level-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .level-value.green {
+            color: var(--green);
+        }
+
+        .level-value.red {
+            color: var(--red);
+        }
+
+        .level-value.yellow {
+            color: var(--yellow);
+        }
+
+        .level-value.cyan {
+            color: var(--cyan);
+        }
+
+        /* Indicator pills */
+        .indicator-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 18px 12px;
+        }
+
+        .ind-pill {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ind-pill .ind-name {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .ind-pill .ind-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .ind-pill .ind-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-left: 2px;
+        }
+
+        /* Reasons section */
+        .reasons-section {
+            padding: 0 18px 12px;
+        }
+
+        .reasons-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .reasons-toggle .arrow {
+            transition: transform 0.2s;
+        }
+
+        .reasons-toggle.open .arrow {
+            transform: rotate(90deg);
+        }
+
+        .reasons-content {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .reasons-content.open {
+            display: block;
+        }
+
+        .reason-item {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 4px 0 4px 14px;
+            position: relative;
+        }
+
+        .reason-item::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+        }
+
+        .caution-item {
+            font-size: 11px;
+            color: var(--yellow);
+            padding: 3px 0;
+        }
+
+        .divider {
+            border-top: 1px solid var(--border);
+            margin: 0 18px;
+        }
+
+        /* Option recommendation */
+        .option-rec {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 18px 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .opt-badge {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .opt-badge.ce {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--green);
+        }
+
+        .opt-badge.pe {
+            background: rgba(255, 23, 68, 0.1);
+            color: var(--red);
+        }
+
+        .opt-badge.neutral {
+            background: rgba(255, 215, 64, 0.1);
+            color: var(--yellow);
+        }
+
+        .opt-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ── Score bar ── */
+        .score-bar-wrap {
+            padding: 0 18px 12px;
+        }
+
+        .score-bar {
+            height: 4px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* ── Disclaimer ── */
+        .disclaimer {
+            text-align: center;
+            padding: 20px;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+
+        /* ── Loading ── */
+        .loading {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── No signal message ── */
+        .no-signal {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .no-signal::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150px;
+            height: 150px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes ping {
+
+            75%,
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+
+        .no-signal-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .no-signal .emoji {
+            font-size: 56px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.4));
+        }
+
+        .no-signal h3 {
+            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        /* ── Error banner ── */
+        .error-banner {
+            background: rgba(255, 23, 68, 0.1);
+            border: 1px solid rgba(255, 23, 68, 0.2);
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin: 16px 0;
+            font-size: 13px;
+            color: var(--red-muted);
+            display: none;
+        }
+
+        /* ── Audio toggle ── */
+        .audio-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .audio-toggle input {
+            display: none;
+        }
+
+        .audio-toggle .toggle-track {
+            width: 32px;
+            height: 18px;
+            background: var(--border);
+            border-radius: 9px;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .audio-toggle input:checked+.toggle-track {
+            background: var(--accent-blue);
+        }
+
+        .audio-toggle .toggle-track::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+
+        .audio-toggle input:checked+.toggle-track::after {
+            transform: translateX(14px);
+        }
+
+        /* ── Filters & Toasts & Modals ── */
+        .filters-bar {
+            display: flex;
+            gap: 10px;
+            padding: 16px 20px 0;
+            max-width: 1440px;
+            margin: 0 auto;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .filter-chip.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--green);
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: white;
+        }
+
+        .opt-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .opt-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+        }
+
+        .opt-table th:first-child {
+            text-align: left;
+        }
+
+        .opt-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: right;
+            margin: 0;
+        }
+
+        .opt-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .opt-table .strike-col {
+            text-align: center;
+            color: white;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .call-side {
+            color: var(--green);
+        }
+
+        .put-side {
+            color: var(--red);
+        }
+
+        .btn-option-chain {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .btn-option-chain:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .signals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-inner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .index-bar {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav
+        style="background: rgba(26,31,46,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 0; position: sticky; top: 0; z-index: 200;">
+        <div
+            style="max-width: 1440px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between;">
+            <a href="/"
+                style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-primary); font-weight: 800; font-size: 14px;"><span
+                    style="background: linear-gradient(135deg, #6366f1, #8b5cf6); width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px;">⚡</span>
+                AI Signal Engine</a>
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <a href="/"
+                    style="color: var(--text-primary); text-decoration: none; font-size: 12px; font-weight: 600;">Dashboard</a>
+                <a href="/oi-data"
+                    style="color: var(--text-secondary); text-decoration: none; font-size: 12px; font-weight: 600;">OI Data</a>
+                <a href="/delivery-data"
+                    style="color: var(--text-secondary); text-decoration: none; font-size: 12px; font-weight: 600;">Delivery</a>
+                <a href="/oi-change"
+                    style="color: var(--text-secondary); text-decoration: none; font-size: 12px; font-weight: 600;">OI Analysis</a>
+                <a href="/pricing"
+                    style="color: var(--text-secondary); text-decoration: none; font-size: 12px; font-weight: 600;">Pricing</a>
+                <a href="/blog"
+                    style="color: var(--text-secondary); text-decoration: none; font-size: 12px; font-weight: 600;">Blog</a>
+                <a href="/profile"
+                    style="color: var(--text-secondary); text-decoration: none; font-size: 12px; font-weight: 600;">Profile</a>
+                <a href="/logout"
+                    style="color: var(--text-muted); text-decoration: none; font-size: 12px; font-weight: 600;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SEBI Warning Banner (flashes every 5 minutes) -->
+    <div id="sebiWarning"
+        style="display: none; background: rgba(255,23,68,0.12); border-bottom: 1px solid rgba(255,23,68,0.3); padding: 10px 20px; text-align: center; font-size: 12px; color: #ff6e40; font-weight: 600; z-index: 199; position: relative; transition: all 0.5s ease;">
+        ⚠️ SEBI DISCLAIMER: AI-generated signals are for educational purposes only. Not SEBI-registered advice. Trading
+        involves substantial risk of loss. Past performance ≠ future results.
+        <button onclick="document.getElementById('sebiWarning').style.display='none'"
+            style="background: none; border: none; color: var(--text-muted); cursor: pointer; margin-left: 16px; font-size: 16px;">✕</button>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <div class="logo">
+                    <div class="logo-icon">⚡</div>
+                    <div class="logo-text">
+                        <h1>AI Signal Engine</h1>
+                        <span>Live Intraday Options Signals</span>
+                    </div>
+                </div>
+
+                <div class="index-bar" id="indexBar">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="status-bar">
+                    <div class="market-badge closed" id="marketBadge">
+                        <div class="dot"></div>
+                        <span id="marketStatus">LOADING</span>
+                    </div>
+
+                    <div class="timer">
+                        Next refresh: <span id="countdown">--</span>s
+                    </div>
+
+                    <button class="btn-refresh" id="btnRefresh" onclick="manualRefresh()">↻ Refresh Now</button>
+
+                    <label class="audio-toggle">
+                        🔔
+                        <input type="checkbox" id="audioToggle" checked>
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filters -->
+    <div class="filters-bar" id="filtersBar">
+        <span style="font-size: 12px; color: var(--text-muted); font-weight: 600; margin-right: 10px;">SHORTLIST:</span>
+        <div class="filter-chip active" data-filter="ACTIONABLE" onclick="setFilter('ACTIONABLE')">🔥 Actionable Only
+        </div>
+        <div class="filter-chip" data-filter="ALL" onclick="setFilter('ALL')">All Signals</div>
+        <div class="filter-chip" data-filter="STRONG BUY" onclick="setFilter('STRONG BUY')">Strong Buy</div>
+        <div class="filter-chip" data-filter="STRONG SELL" onclick="setFilter('STRONG SELL')">Strong Sell</div>
+    </div>
+
+    <!-- Main content -->
+    <main class="container">
+        <div class="error-banner" id="errorBanner"></div>
+
+        <div id="content">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p style="color: var(--text-muted);">Fetching live data & computing signals...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Disclaimer -->
+    <footer class="disclaimer">
+        ⚠️ AI-generated signals for educational purposes only. Not SEBI-registered advice. Always verify prices before
+        trading. Past performance ≠ future results.
+    </footer>
+
+    <!-- Toast & Modal Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="modal-overlay" id="optionModal" onclick="if(event.target===this) closeOptionModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Option Chain</div>
+                <button class="modal-close" onclick="closeOptionModal()">&times;</button>
+            </div>
+            <div id="modalContent">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Alert sound -->
+    <audio id="alertSound" preload="auto">
+        <source
+            src="data:audio/wav;base64,UklGRl4AAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToAAAD/////AAAAAAAAAP//AAABAAAA//8AAAEA///+/wAAAQAAAP///v8AAAEAAAD///7/AAAB"
+            type="audio/wav">
+    </audio>
+
+    <script>
+        const REFRESH_SECONDS = 60; // {{ refresh_seconds }}
+        let countdown = REFRESH_SECONDS;
+        let previousSignals = {};
+        let countdownInterval;
+        let activeFilter = 'ACTIONABLE';
+        let currentSignalsData = [];
+
+        // ── Fetch and render ──
+        async function fetchSignals() {
+            try {
+                const resp = await fetch('/api/signals');
+                const data = await resp.json();
+
+                // Update market status
+                updateMarketStatus(data.market_status);
+
+                // Update indices
+                updateIndices(data.indices || {});
+
+                // Update error
+                if (data.error) {
+                    document.getElementById('errorBanner').textContent = '⚠️ ' + data.error;
+                    document.getElementById('errorBanner').style.display = 'block';
+                } else {
+                    document.getElementById('errorBanner').style.display = 'none';
+                }
+
+                // Render signals
+                if (data.signals && data.signals.length > 0) {
+                    currentSignalsData = data.signals;
+                    renderSignals();
+                    checkForNewAlerts();
+                } else {
+                    document.getElementById('content').innerHTML = `
+                        <div class="no-signal">
+                            <div class="no-signal-content">
+                                <div class="emoji">📡</div>
+                                <h3>Scanning Market for Alpha...</h3>
+                                <p style="margin-bottom: 16px;">AI Engine is analyzing but hasn't detected high-conviction setups matching current thresholds.</p>
+                                <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,215,64,0.1); border:1px solid rgba(255,215,64,0.3); padding:6px 14px; border-radius:30px;">
+                                    <span style="width:8px; height:8px; background:var(--yellow); border-radius:50%; animation:pulse 2s infinite;"></span>
+                                    <span style="color:var(--yellow); font-size:12px; font-weight:700; font-family:'JetBrains Mono',monospace;">CASH IS KING 👑</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Fetch error:', err);
+            }
+        }
+
+        function updateMarketStatus(status) {
+            const badge = document.getElementById('marketBadge');
+            const text = document.getElementById('marketStatus');
+            text.textContent = status || 'UNKNOWN';
+            badge.className = 'market-badge';
+            if (status === 'LIVE') badge.classList.add('live');
+            else if (status === 'PRE-OPEN') badge.classList.add('preopen');
+            else badge.classList.add('closed');
+        }
+
+        function updateIndices(indices) {
+            const bar = document.getElementById('indexBar');
+            bar.innerHTML = '';
+            for (const [name, data] of Object.entries(indices)) {
+                const isUp = data.change >= 0;
+                bar.innerHTML += `
+                    <div class="index-pill">
+                        <span class="name">${name}</span>
+                        <span class="value">${data.value?.toLocaleString('en-IN') || '--'}</span>
+                        <span class="change ${isUp ? 'up' : 'down'}">${isUp ? '▲' : '▼'} ${Math.abs(data.change_pct || 0).toFixed(2)}%</span>
+                    </div>
+                `;
+            }
+        }
+
+        function setFilter(filterType) {
+            activeFilter = filterType;
+            document.querySelectorAll('.filter-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.filter === filterType);
+            });
+            renderSignals();
+        }
+
+        function renderSignals() {
+            let filtered = currentSignalsData;
+            if (activeFilter === 'ACTIONABLE') {
+                filtered = currentSignalsData.filter(s => s.signal_type !== 'NEUTRAL');
+            } else if (activeFilter !== 'ALL') {
+                filtered = currentSignalsData.filter(s => s.signal_type === activeFilter);
+            }
+
+            let html = '<div class="signals-grid">';
+            if (filtered.length === 0) {
+                html += '<div class="no-signal" style="grid-column: 1/-1;"><h3>No signals match the current filter</h3></div>';
+            }
+
+            filtered.forEach((s, i) => {
+                const cardClass = getCardClass(s.signal_type);
+                const scoreColor = s.color || '#94a3b8';
+                const priceChangeVal = s.stock_info?.prev_close
+                    ? ((s.price - s.stock_info.prev_close) / s.stock_info.prev_close * 100)
+                    : 0;
+                const priceUp = priceChangeVal >= 0;
+
+                html += `
+                <div class="signal-card ${cardClass}">
+                    <div class="card-header">
+                        <div class="card-title-area">
+                            <div class="card-symbol">${s.symbol}</div>
+                            <div class="card-sector">${s.sector}</div>
+                        </div>
+                        <div class="card-score-area">
+                            <div class="score-badge" style="background:${s.bg_color}; color:${scoreColor}; border:1px solid ${scoreColor}40;">
+                                ${s.score}
+                            </div>
+                            <span class="signal-label" style="color:${scoreColor}">${s.signal_type}</span>
+                        </div>
+                    </div>
+
+                    <div class="price-row">
+                        <div class="price-main" style="color:${scoreColor}">₹${s.price?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                        <div class="price-change ${priceUp ? 'up' : 'down'}">
+                            ${priceUp ? '▲' : '▼'} ${Math.abs(priceChangeVal).toFixed(2)}%
+                        </div>
+                    </div>
+
+                    <!-- Score bar -->
+                    <div class="score-bar-wrap">
+                        <div class="score-bar">
+                            <div class="score-bar-fill" style="width:${s.score}%; background:${scoreColor};"></div>
+                        </div>
+                    </div>
+
+                    <!-- Levels -->
+                    <div class="levels-grid">
+                        <div class="level-item">
+                            <div class="level-label">Entry</div>
+                            <div class="level-value cyan">₹${s.entry}</div>
+                        </div>
+                        <div class="level-item">
+                            <div class="level-label">Stop Loss</div>
+                            <div class="level-value red">₹${s.stop_loss}</div>
+                        </div>
+                        <div class="level-item">
+                            <div class="level-label">Target 1</div>
+                            <div class="level-value green">₹${s.target_1}</div>
+                        </div>
+                        <div class="level-item">
+                            <div class="level-label">Target 2</div>
+                            <div class="level-value green">₹${s.target_2}</div>
+                        </div>
+                    </div>
+
+                    <!-- Indicator pills -->
+                    <div class="indicator-row">
+                        ${renderIndicatorPills(s)}
+                    </div>
+
+                    <!-- Reasons (collapsible) -->
+                    <div class="reasons-section">
+                        <div class="reasons-toggle" onclick="toggleReasons(this)">
+                            <span class="arrow">▶</span> WHY · CAUTIONS · TRADE PLAN
+                        </div>
+                        <div class="reasons-content">
+                            ${s.reasons.map(r => `<div class="reason-item">${r}</div>`).join('')}
+                            <div style="margin-top:8px;">
+                                ${s.cautions.map(c => `<div class="caution-item">${c}</div>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- Option recommendation -->
+                    <div class="option-rec">
+                        <div>
+                            <span class="opt-badge ${s.option_type === 'CE' ? 'ce' : s.option_type === 'PE' ? 'pe' : 'neutral'}">
+                                ${s.bias} → Buy ${s.option_type}
+                            </span>
+                            <button class="btn-option-chain" style="margin-left: 10px;" onclick="openOptionModal('${s.symbol}')">⛓️ Option Chain</button>
+                        </div>
+                        <div class="opt-time">⏱ ${s.timestamp}</div>
+                    </div>
+                </div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function renderIndicatorPills(s) {
+            const indicators = s.indicators || {};
+            const scores = s.indicator_scores || {};
+            let pills = '';
+
+            const items = [
+                { name: 'RSI', val: indicators.rsi, score: scores.rsi },
+                { name: 'MACD', val: indicators.macd, score: scores.macd },
+                { name: 'VWAP', val: indicators.vwap ? `₹${indicators.vwap}` : null, score: scores.vwap },
+                { name: 'ST', val: indicators.supertrend_dir, score: scores.supertrend },
+                { name: 'ADX', val: indicators.adx, score: scores.adx },
+                { name: 'VOL', val: indicators.volume_ratio ? `${indicators.volume_ratio}x` : null, score: scores.volume },
+                { name: 'EMA20', val: indicators.ema_20 ? `₹${indicators.ema_20}` : null, score: scores.ema },
+                { name: 'OI PCR', val: s.stock_info?.options?.pcr ? `${s.stock_info.options.pcr}` : null, score: scores.pcr },
+            ];
+
+            items.forEach(item => {
+                if (item.val === null || item.val === undefined) return;
+                const sc = item.score || 50;
+                const scColor = sc >= 65 ? 'var(--green)' : sc <= 35 ? 'var(--red)' : 'var(--yellow)';
+                const scBg = sc >= 65 ? 'rgba(0,230,118,0.15)' : sc <= 35 ? 'rgba(255,23,68,0.1)' : 'rgba(255,215,64,0.1)';
+                pills += `
+                    <div class="ind-pill">
+                        <span class="ind-name">${item.name}</span>
+                        <span class="ind-val">${item.val}</span>
+                        <span class="ind-score" style="background:${scBg};color:${scColor}">${Math.round(sc)}</span>
+                    </div>
+                `;
+            });
+            return pills;
+        }
+
+        function getCardClass(signalType) {
+            switch (signalType) {
+                case 'STRONG BUY': return 'strong-buy';
+                case 'BUY': return 'buy';
+                case 'SELL': return 'sell';
+                case 'STRONG SELL': return 'strong-sell';
+                default: return 'neutral';
+            }
+        }
+
+        function toggleReasons(el) {
+            el.classList.toggle('open');
+            const content = el.nextElementSibling;
+            content.classList.toggle('open');
+        }
+
+        function checkForNewAlerts() {
+            const audioEnabled = document.getElementById('audioToggle').checked;
+            currentSignalsData.forEach(s => {
+                if ((s.signal_type === 'STRONG BUY' || s.signal_type === 'STRONG SELL') &&
+                    previousSignals[s.symbol] !== s.signal_type) {
+                    if (audioEnabled) playAlert();
+                    let color = s.signal_type === 'STRONG BUY' ? 'var(--green)' : 'var(--red)';
+                    showToast(`${s.symbol}: New ${s.signal_type} Signal!`, color);
+                }
+                previousSignals[s.symbol] = s.signal_type;
+            });
+        }
+
+        function showToast(message, color) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.borderLeftColor = color;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            // Trigger reflow & animate
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        async function openOptionModal(symbol) {
+            const modal = document.getElementById('optionModal');
+            const content = document.getElementById('modalContent');
+            const title = document.getElementById('modalTitle');
+
+            modal.classList.add('show');
+            title.textContent = `Option Chain: ${symbol}`;
+            content.innerHTML = '<div class="loading-spinner" style="margin:40px auto; border-color:var(--border); border-top-color:var(--accent-blue);"></div><div style="text-align:center; color:var(--text-muted);">Pricing options via Black-Scholes...</div>';
+
+            try {
+                const res = await fetch(`/api/option_chain/${symbol}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    content.innerHTML = `<div style="color:var(--red); text-align:center;">${data.error}</div>`;
+                    return;
+                }
+
+                let html = `
+                    <div style="margin-bottom: 16px; font-size: 13px; color: var(--text-muted);">
+                        Spot Price: <strong style="color:white; font-family:'JetBrains Mono',monospace;">₹${data.spot_price.toFixed(2)}</strong> &nbsp;|&nbsp; 
+                        Expiry: <strong style="color:white">${data.expiry}</strong>
+                    </div>
+                    <table class="opt-table">
+                        <thead>
+                            <tr>
+                                <th colspan="3" style="text-align:center; color:var(--green)">CALLS</th>
+                                <th></th>
+                                <th colspan="3" style="text-align:center; color:var(--red)">PUTS</th>
+                            </tr>
+                            <tr>
+                                <th style="text-align:left">Delta</th><th>IV%</th><th>Price (₹)</th>
+                                <th class="strike-col">STRIKE</th>
+                                <th>Price (₹)</th><th>IV%</th><th>Delta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                data.chain.forEach(row => {
+                    // check if closest to ATM
+                    const diffs = data.chain.map(r => Math.abs(r.strike - data.spot_price));
+                    const isAtm = Math.abs(row.strike - data.spot_price) === Math.min(...diffs);
+                    const rowStyle = isAtm ? 'background: rgba(255,255,255,0.05);' : '';
+
+                    html += `
+                        <tr style="${rowStyle}">
+                            <td style="text-align:left" class="call-side">${row.call.delta.toFixed(3)}</td>
+                            <td class="call-side">${row.call.iv}%</td>
+                            <td class="call-side" style="font-weight:700">₹${row.call.price.toFixed(2)}</td>
+                            <td class="strike-col">${row.strike}${isAtm ? ' <span style="font-size:9px;color:var(--text-muted)">(ATM)</span>' : ''}</td>
+                            <td class="put-side" style="font-weight:700">₹${row.put.price.toFixed(2)}</td>
+                            <td class="put-side">${row.put.iv}%</td>
+                            <td class="put-side">${row.put.delta.toFixed(3)}</td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table>';
+                content.innerHTML = html;
+
+            } catch (err) {
+                content.innerHTML = `<div style="color:var(--red); text-align:center;">Failed to load option chain</div>`;
+            }
+        }
+
+        function closeOptionModal() {
+            document.getElementById('optionModal').classList.remove('show');
+        }
+
+        function playAlert() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 880;
+                osc.type = 'sine';
+                gain.gain.value = 0.1;
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } catch (e) { }
+        }
+
+        async function manualRefresh() {
+            const btn = document.getElementById('btnRefresh');
+            btn.disabled = true;
+            btn.textContent = '⟳ Loading...';
+            try {
+                await fetch('/api/refresh', { method: 'POST' });
+                await fetchSignals();
+                countdown = REFRESH_SECONDS;
+            } catch (e) {
+                console.error(e);
+            }
+            btn.disabled = false;
+            btn.textContent = '↻ Refresh Now';
+        }
+
+        // ── Countdown timer ──
+        function startCountdown() {
+            countdown = REFRESH_SECONDS;
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                countdown--;
+                document.getElementById('countdown').textContent = countdown;
+                if (countdown <= 0) {
+                    countdown = REFRESH_SECONDS;
+                    fetchSignals();
+                }
+            }, 1000);
+        }
+
+        // ── Init ──
+        fetchSignals();
+        startCountdown();
+
+        // ── SEBI Warning Flash (every 5 minutes) ──
+        function flashSebiWarning() {
+            const banner = document.getElementById('sebiWarning');
+            if (banner) {
+                banner.style.display = 'block';
+                setTimeout(() => { banner.style.display = 'none'; }, 15000); // Show for 15 seconds
+            }
+        }
+        // Initial flash after 30 seconds
+        setTimeout(flashSebiWarning, 30000);
+        // Then every 5 minutes
+        setInterval(flashSebiWarning, 300000);
+    </script>
+</body>
+
+</html>

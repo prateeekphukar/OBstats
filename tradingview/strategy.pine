@@ -1,0 +1,128 @@
+// ═══════════════════════════════════════════════════════════════
+// Options HFT Bot — TradingView Alert Strategy
+// 
+// This Pine Script monitors NIFTY/BANKNIFTY for volatility signals
+// and sends webhook alerts to the Options HFT Bot for execution.
+//
+// HOW TO USE:
+// 1. Add this script to TradingView (Pine Editor → paste → Add to Chart)
+// 2. Set an "Alert" on this indicator
+// 3. In the alert, set Webhook URL to: http://YOUR_IP:5000/webhook
+// 4. Use the JSON message template provided in the alert message
+// ═══════════════════════════════════════════════════════════════
+
+//@version=5
+strategy("Options HFT Bot Signals", overlay=true, default_qty_type=strategy.fixed, default_qty_value=1)
+
+// ── INPUTS ───────────────────────────────────────────
+iv_period       = input.int(20, "IV Lookback Period", minval=5)
+rv_period       = input.int(20, "Realized Vol Period", minval=5)
+sell_threshold  = input.float(1.25, "IV/RV Sell Threshold", step=0.05)
+buy_threshold   = input.float(0.80, "IV/RV Buy Threshold", step=0.05)
+atr_period      = input.int(14, "ATR Period")
+atr_multiplier  = input.float(1.5, "ATR Stop Multiplier", step=0.1)
+rsi_period      = input.int(14, "RSI Period")
+rsi_overbought  = input.int(70, "RSI Overbought")
+rsi_oversold    = input.int(30, "RSI Oversold")
+
+// ── CALCULATIONS ─────────────────────────────────────
+
+// Realized Volatility (annualized from close-to-close returns)
+log_returns = math.log(close / close[1])
+realized_vol = ta.stdev(log_returns, rv_period) * math.sqrt(252) * 100
+
+// Implied Volatility proxy (using ATR as a proxy since TV doesn't have options IV)
+// In real usage, you'd use INDIA VIX or the actual IV from your data feed
+atr_val = ta.atr(atr_period)
+iv_proxy = (atr_val / close) * math.sqrt(252) * 100
+
+// IV/RV Ratio
+iv_rv_ratio = iv_proxy / realized_vol
+
+// RSI for additional confirmation
+rsi_val = ta.rsi(close, rsi_period)
+
+// Bollinger Bands for vol regime detection
+[bb_mid, bb_upper, bb_lower] = ta.bb(close, 20, 2.0)
+bb_width = (bb_upper - bb_lower) / bb_mid * 100
+
+// VWAP
+vwap_val = ta.vwap(hlc3)
+
+// ── SIGNAL CONDITIONS ────────────────────────────────
+
+// SELL VOL: IV much higher than RV + overbought RSI
+sell_vol_signal = iv_rv_ratio > sell_threshold and rsi_val > rsi_overbought and close > vwap_val
+
+// BUY VOL: IV much lower than RV + oversold RSI  
+buy_vol_signal = iv_rv_ratio < buy_threshold and rsi_val < rsi_oversold and close < vwap_val
+
+// Vol Spike: Sudden expansion in Bollinger Band width
+vol_spike = bb_width > ta.sma(bb_width, 50) * 1.5
+
+// Skew Signal: Price deviating far from VWAP
+skew_signal = math.abs(close - vwap_val) / vwap_val > 0.01
+
+// ── STRATEGY ENTRIES ─────────────────────────────────
+
+// ATR-based stop loss
+atr_stop = atr_val * atr_multiplier
+
+if sell_vol_signal
+    strategy.entry("SELL_VOL", strategy.short, comment="SELL_VOL")
+    strategy.exit("SV_Exit", "SELL_VOL", stop=close + atr_stop, limit=close - atr_stop * 2)
+
+if buy_vol_signal
+    strategy.entry("BUY_VOL", strategy.long, comment="BUY_VOL")
+    strategy.exit("BV_Exit", "BUY_VOL", stop=close - atr_stop, limit=close + atr_stop * 2)
+
+// ── PLOTS ────────────────────────────────────────────
+
+// Signal markers on chart
+plotshape(sell_vol_signal, title="Sell Vol", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.small)
+plotshape(buy_vol_signal, title="Buy Vol", style=shape.triangleup, location=location.belowbar, color=color.new(color.green, 0), size=size.small)
+plotshape(vol_spike, title="Vol Spike", style=shape.diamond, location=location.abovebar, color=color.new(color.orange, 0), size=size.tiny)
+
+// VWAP line
+plot(vwap_val, "VWAP", color=color.new(color.purple, 30), linewidth=2)
+
+// IV/RV Ratio in separate pane
+// (Uncomment these to see the ratio as a separate indicator)
+// hline(sell_threshold, "Sell Threshold", color=color.red, linestyle=hline.style_dashed)
+// hline(buy_threshold, "Buy Threshold", color=color.green, linestyle=hline.style_dashed)
+// hline(1.0, "Neutral", color=color.gray, linestyle=hline.style_dotted)
+// plot(iv_rv_ratio, "IV/RV Ratio", color=color.blue)
+
+// ── INFO TABLE ───────────────────────────────────────
+var table info = table.new(position.top_right, 2, 6, bgcolor=color.new(color.black, 80))
+
+if barstate.islast
+    table.cell(info, 0, 0, "Metric", text_color=color.white, text_size=size.small)
+    table.cell(info, 1, 0, "Value", text_color=color.white, text_size=size.small)
+    table.cell(info, 0, 1, "IV/RV Ratio", text_color=color.gray, text_size=size.small)
+    table.cell(info, 1, 1, str.tostring(iv_rv_ratio, "#.##"), text_color=iv_rv_ratio > sell_threshold ? color.red : iv_rv_ratio < buy_threshold ? color.green : color.white, text_size=size.small)
+    table.cell(info, 0, 2, "Realized Vol", text_color=color.gray, text_size=size.small)
+    table.cell(info, 1, 2, str.tostring(realized_vol, "#.#") + "%", text_color=color.white, text_size=size.small)
+    table.cell(info, 0, 3, "IV Proxy", text_color=color.gray, text_size=size.small)
+    table.cell(info, 1, 3, str.tostring(iv_proxy, "#.#") + "%", text_color=color.white, text_size=size.small)
+    table.cell(info, 0, 4, "RSI", text_color=color.gray, text_size=size.small)
+    table.cell(info, 1, 4, str.tostring(rsi_val, "#.#"), text_color=rsi_val > rsi_overbought ? color.red : rsi_val < rsi_oversold ? color.green : color.white, text_size=size.small)
+    table.cell(info, 0, 5, "BB Width", text_color=color.gray, text_size=size.small)
+    table.cell(info, 1, 5, str.tostring(bb_width, "#.##") + "%", text_color=color.white, text_size=size.small)
+
+// ═══════════════════════════════════════════════════════
+// WEBHOOK ALERT MESSAGE TEMPLATE
+// 
+// When creating a TradingView alert, use this JSON as the message:
+//
+// {
+//   "signal": "{{strategy.order.action}}",
+//   "signal_type": "{{strategy.order.comment}}",
+//   "symbol": "{{ticker}}",
+//   "price": {{close}},
+//   "time": "{{time}}",
+//   "iv_rv_ratio": {{plot("IV/RV Ratio")}},
+//   "strategy": "options_hft_bot",
+//   "action": "{{strategy.order.action}}"
+// }
+// ═══════════════════════════════════════════════════════

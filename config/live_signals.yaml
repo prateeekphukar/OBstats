@@ -1,0 +1,91 @@
+# ──────────────────────────────────────────────
+# Live AI Signal System - Configuration
+# ──────────────────────────────────────────────
+
+# Watchlist of NSE stocks to monitor (append .NS for yfinance)
+watchlist:
+  - "COALINDIA"
+  - "CANBK"
+  - "HINDALCO"
+  - "LT"
+  - "NTPC"
+  - "ABB"
+  - "TATAPOWER"
+  - "INDUSINDBK"
+  - "JSWSTEEL"
+  - "PNB"
+
+# Index tickers to show in header
+indices:
+  - symbol: "^NSEI"
+    name: "NIFTY 50"
+  - symbol: "^NSEBANK"
+    name: "BANK NIFTY"
+
+# Data settings
+data:
+  interval: "5m"           # 1m, 5m, 15m
+  period: "5d"             # How many days of history to fetch
+  refresh_seconds: 60      # Auto-refresh interval
+  yfinance_suffix: ".NS"   # Append to watchlist symbols for yfinance
+
+# Signal thresholds
+signals:
+  strong_buy_threshold: 80
+  buy_threshold: 65
+  neutral_low: 35
+  sell_threshold: 20
+  # Minimum score to show alert
+  alert_threshold: 75
+
+# Indicator weights (must sum to 1.0)
+weights:
+  vwap: 0.15
+  rsi: 0.10
+  macd: 0.15
+  supertrend: 0.15
+  adx: 0.10
+  volume: 0.10
+  ema: 0.10
+  bollinger: 0.05
+  pcr: 0.10  # Put-Call Ratio weighting
+
+# Indicator parameters
+indicators:
+  rsi_period: 14
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+  supertrend_period: 10
+  supertrend_multiplier: 3.0
+  adx_period: 14
+  bb_period: 20
+  bb_std: 2.0
+  ema_fast: 20
+  ema_slow: 50
+  volume_avg_period: 20
+  volume_spike_threshold: 1.5
+
+# Risk parameters
+risk:
+  default_sl_pct: 1.0       # Default stop-loss percentage
+  default_target_pct: 2.0   # Default target percentage
+  risk_reward_ratio: 2.0
+
+# Dashboard settings
+dashboard:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+
+# Authentication (OAuth)
+auth:
+  google_client_id: ""
+  google_client_secret: ""
+  facebook_client_id: ""       # Fill in your Facebook App ID
+  facebook_client_secret: ""   # Fill in your Facebook App Secret
+
+# Razorpay Payment Gateway
+razorpay:
+  key_id: ""         # Fill in your Razorpay Key ID
+  key_secret: ""     # Fill in your Razorpay Key Secret

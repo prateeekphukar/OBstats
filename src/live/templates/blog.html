@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>peedeeff — Learn Options Trading | AI Signal Engine</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #1a1f2e;
+            --border: #2a3040;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #6366f1;
+            --accent-purple: #8b5cf6;
+            --green: #00e676;
+            --red: #ff1744;
+            --yellow: #ffd740;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 230, 118, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .nav {
+            background: rgba(26, 31, 46, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .nav-logo span {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text-primary);
+        }
+
+        .nav-links .btn-sm {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            padding: 7px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .blog-brand {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 40px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            animation: gradient 6s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .blog-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .blog-card {
+            background: rgba(26, 31, 46, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            display: flex;
+            gap: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .blog-card:hover {
+            transform: translateX(6px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 24px rgba(99, 102, 241, 0.15);
+        }
+
+        .blog-icon {
+            flex-shrink: 0;
+            width: 52px;
+            height: 52px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .blog-content {
+            flex: 1;
+        }
+
+        .blog-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .blog-tag.beginner {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--green);
+        }
+
+        .blog-tag.intermediate {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .blog-tag.advanced {
+            background: rgba(255, 215, 64, 0.15);
+            color: var(--yellow);
+        }
+
+        .blog-title {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .blog-excerpt {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .blog-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 16px;
+        }
+
+        /* Expanded Blog Content */
+        .blog-full {
+            display: none;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .blog-full.open {
+            display: block;
+        }
+
+        .blog-full h4 {
+            color: var(--text-primary);
+            font-size: 15px;
+            margin: 16px 0 8px;
+        }
+
+        .blog-full code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .blog-full ul {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .blog-full li {
+            margin-bottom: 4px;
+        }
+
+        .blog-full .tip {
+            background: rgba(0, 230, 118, 0.08);
+            border-left: 3px solid var(--green);
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+        }
+
+        .blog-full .warning {
+            background: rgba(255, 23, 68, 0.08);
+            border-left: 3px solid var(--red);
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="/" class="nav-logo"><span>⚡</span> AI Signal Engine</a>
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/blog" class="active">Blog</a>
+                {% if current_user.is_authenticated %}
+                <a href="/profile">Profile</a>
+                <a href="/logout">Logout</a>
+                {% else %}
+                <a href="/login" class="btn-sm">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="blog-brand">peedeeff</div>
+            <p>Your guide to making smarter options trades with AI signals</p>
+        </div>
+
+        <div class="blog-grid">
+
+            <!-- Blog 1 -->
+            <div class="blog-card" onclick="toggleBlog(1)">
+                <div class="blog-icon">📖</div>
+                <div class="blog-content">
+                    <span class="blog-tag beginner">Beginner</span>
+                    <div class="blog-title">How to Read AI Signal Cards to Buy Options</div>
+                    <div class="blog-excerpt">Understand what each element on a signal card means — from the AI Score
+                        and bias to the Entry, Stop Loss, and Target levels — and how to translate them into an options
+                        trade.</div>
+                    <div class="blog-meta">
+                        <span>📅 23 Feb 2026</span>
+                        <span>⏱️ 5 min read</span>
+                    </div>
+                    <div class="blog-full" id="blog-1">
+                        <h4>Understanding the Signal Card</h4>
+                        <p>Each card on the AI Signal Engine dashboard represents a single stock from your watchlist.
+                            Here's what each section means:</p>
+                        <ul>
+                            <li><strong>AI Score (0–100):</strong> The weighted aggregate of 8+ technical indicators.
+                                Higher = stronger conviction.</li>
+                            <li><strong>Signal Type:</strong> STRONG BUY, BUY, NEUTRAL, SELL, STRONG SELL — derived from
+                                the score.</li>
+                            <li><strong>Entry Price:</strong> The recommended price level to enter the trade.</li>
+                            <li><strong>Stop Loss:</strong> Your exit point if the trade goes against you. Always
+                                respect this!</li>
+                            <li><strong>Targets 1 & 2:</strong> Profit-taking levels. Book partial profits at T1, trail
+                                at T2.</li>
+                        </ul>
+
+                        <h4>Translating Signals to Options Trades</h4>
+                        <p>When you see <code>BULLISH → Buy CE</code>, it means:</p>
+                        <ul>
+                            <li>Open the <strong>Option Chain</strong> modal (click the ⛓️ button)</li>
+                            <li>Look for the <strong>ATM (At-The-Money)</strong> strike — highlighted in the table</li>
+                            <li>Buy the Call Option (CE) at that strike for the nearest expiry</li>
+                            <li>Set your stop loss based on the premium, not just the underlying</li>
+                        </ul>
+
+                        <div class="tip">
+                            💡 <strong>Pro Tip:</strong> Check the <code>OI PCR</code> pill on the card. If PCR > 1.0
+                            and the signal is bullish, there's strong put-writing support. This confirms the trend!
+                        </div>
+
+                        <div class="warning">
+                            ⚠️ <strong>Warning:</strong> Never trade options without a stop loss. Options can lose 100%
+                            of their value very quickly, especially near expiry.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blog 2 -->
+            <div class="blog-card" onclick="toggleBlog(2)">
+                <div class="blog-icon">📊</div>
+                <div class="blog-content">
+                    <span class="blog-tag intermediate">Intermediate</span>
+                    <div class="blog-title">Decoding the Option Chain: Greeks, IV & Strike Selection</div>
+                    <div class="blog-excerpt">Learn how to use the built-in Option Chain viewer to pick the right
+                        strike, understand Delta for directional trades, and spot overpriced premiums using IV%.</div>
+                    <div class="blog-meta">
+                        <span>📅 23 Feb 2026</span>
+                        <span>⏱️ 7 min read</span>
+                    </div>
+                    <div class="blog-full" id="blog-2">
+                        <h4>The Option Chain Modal</h4>
+                        <p>Clicking <code>⛓️ Option Chain</code> on any signal card opens a theoretical pricing model
+                            powered by Black-Scholes. Here's how to read it:</p>
+                        <ul>
+                            <li><strong>Strikes:</strong> The price levels at which you can buy/sell the option. ATM is
+                                closest to the current market price.</li>
+                            <li><strong>Delta:</strong> How much the option price moves per ₹1 move in the stock.
+                                <code>0.5</code> delta = ₹0.50 change per ₹1 stock move.</li>
+                            <li><strong>IV (Implied Volatility):</strong> Higher IV = costlier premiums. Avoid buying
+                                when IV is spiked.</li>
+                        </ul>
+
+                        <h4>Strike Selection Rules</h4>
+                        <ul>
+                            <li>For <strong>directional trades</strong>: Buy ATM or 1-strike ITM. Higher delta = more
+                                responsive.</li>
+                            <li>For <strong>scalping</strong>: Buy ATM with tight SL. Exit at 10-20% premium gain.</li>
+                            <li>For <strong>swing</strong>: Go 1-2 strikes OTM if the score is >80. More leverage but
+                                more risk.</li>
+                        </ul>
+
+                        <div class="tip">
+                            💡 <strong>Pro Tip:</strong> Compare the theoretical price shown in our chain with the
+                            actual market price on your broker. If the market premium is much higher, IV is elevated —
+                            consider selling rather than buying.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blog 3 -->
+            <div class="blog-card" onclick="toggleBlog(3)">
+                <div class="blog-icon">🧠</div>
+                <div class="blog-content">
+                    <span class="blog-tag advanced">Advanced</span>
+                    <div class="blog-title">Using PCR & OI Confluence for Fakeout Protection</div>
+                    <div class="blog-excerpt">Deep-dive into how the Put-Call Ratio (PCR) from Open Interest data can
+                        confirm or deny technical breakouts. Learn why some "Strong Buy" signals still fail.</div>
+                    <div class="blog-meta">
+                        <span>📅 23 Feb 2026</span>
+                        <span>⏱️ 8 min read</span>
+                    </div>
+                    <div class="blog-full" id="blog-3">
+                        <h4>What is PCR (Put-Call Ratio)?</h4>
+                        <p>The <strong>Put-Call Ratio</strong> is calculated as
+                            <code>Total Put OI / Total Call OI</code>. It tells us where the "smart money" is
+                            positioned:</p>
+                        <ul>
+                            <li><strong>PCR > 1.0:</strong> More puts being written than calls → Market makers expect
+                                prices to rise (Bullish)</li>
+                            <li><strong>PCR < 0.7:</strong> More calls being written → Market makers expect prices to
+                                        fall or stay flat (Bearish)</li>
+                            <li><strong>PCR 0.7–1.0:</strong> Mixed/neutral — no strong directional bias from options
+                                market</li>
+                        </ul>
+
+                        <h4>How Our Engine Uses PCR</h4>
+                        <p>The AI Signal Engine adds PCR as a 10% weight in its scoring model. But more importantly, it
+                            generates <strong>Fakeout Warnings</strong>:</p>
+                        <ul>
+                            <li>If technicals say BULLISH but PCR < 0.8 → <code>⚠️ Fakeout Risk: Options OI is
+                                    Bearish</code></li>
+                            <li>If technicals say BEARISH but PCR > 1.1 →
+                                <code>⚠️ Fakeout Risk: Options OI is Bullish</code></li>
+                        </ul>
+
+                        <div class="warning">
+                            ⚠️ <strong>Important:</strong> PCR alone is not a trading signal. Always combine it with the
+                            full AI score, price action, and your own analysis. Never risk more than 2% of your capital
+                            on a single trade.
+                        </div>
+
+                        <h4>Practical Example</h4>
+                        <p>Suppose CANBK shows <code>Score: 85 | STRONG BUY | PCR: 1.35</code>. This is a
+                            high-confluence setup because:</p>
+                        <ul>
+                            <li>Technical indicators are strongly bullish (85/100)</li>
+                            <li>Options market confirms with heavy put writing (PCR 1.35)</li>
+                            <li>You can confidently buy the ATM Call with defined risk</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blog 4 -->
+            <div class="blog-card" onclick="toggleBlog(4)">
+                <div class="blog-icon">⚡</div>
+                <div class="blog-content">
+                    <span class="blog-tag beginner">Beginner</span>
+                    <div class="blog-title">Getting Started: Your First Trade Using AI Signals</div>
+                    <div class="blog-excerpt">A step-by-step walkthrough from opening the dashboard to placing your
+                        first options trade. Includes checklist and common mistakes to avoid.</div>
+                    <div class="blog-meta">
+                        <span>📅 23 Feb 2026</span>
+                        <span>⏱️ 6 min read</span>
+                    </div>
+                    <div class="blog-full" id="blog-4">
+                        <h4>Step-by-Step Guide</h4>
+                        <ul>
+                            <li><strong>Step 1:</strong> Open the Dashboard at 9:15 AM IST (market open). The signals
+                                auto-refresh every 60 seconds.</li>
+                            <li><strong>Step 2:</strong> Use the <strong>"🔥 Actionable Only"</strong> filter to see
+                                only high-conviction signals.</li>
+                            <li><strong>Step 3:</strong> Pick a signal with Score > 75 and matching PCR confluence.</li>
+                            <li><strong>Step 4:</strong> Click <strong>"⛓️ Option Chain"</strong> to find the right
+                                strike.</li>
+                            <li><strong>Step 5:</strong> Note the Entry, Stop Loss, and Target from the card.</li>
+                            <li><strong>Step 6:</strong> Open your broker (Zerodha/Dhan/Groww) and place the order.</li>
+                            <li><strong>Step 7:</strong> Set a GTT/alert at your stop loss and target levels.</li>
+                        </ul>
+
+                        <h4>Common Mistakes to Avoid</h4>
+                        <ul>
+                            <li>❌ Trading NEUTRAL signals — these have no edge</li>
+                            <li>❌ Ignoring the stop loss — "hope" is not a strategy</li>
+                            <li>❌ Buying OTM options near expiry — theta decay will eat your premium</li>
+                            <li>❌ Over-leveraging — never risk more than 2% of capital per trade</li>
+                            <li>❌ Trading in the first 15 minutes — let the noise settle</li>
+                        </ul>
+
+                        <div class="tip">
+                            💡 <strong>Pro Tip:</strong> Paper trade for the first week using the ₹29 intro plan. Track
+                            your hypothetical P&L before risking real capital.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleBlog(id) {
+            const el = document.getElementById('blog-' + id);
+            el.classList.toggle('open');
+        }
+    </script>
+</body>
+
+</html>
