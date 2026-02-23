@@ -18,6 +18,7 @@ import logging
 import threading
 import time as _time
 import secrets
+from kiteconnect import KiteConnect
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -38,6 +39,13 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logger = logging.getLogger(__name__)
+
+# ── Kite API Setup ──
+KITE_API_KEY = "iog8jjp7lvduite0"
+KITE_API_SECRET = "nt98exv18ogjh11z5g7ewg5tqygziixa"
+kite_access_token = None
+kite = KiteConnect(api_key=KITE_API_KEY)
+kite_instruments = []
 
 # ── Load config ──
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'live_signals.yaml')
@@ -243,11 +251,37 @@ def api_refresh():
     refresh_data()
     return jsonify({"status": "ok", "count": len(current_signals)})
 
+@app.route("/kite/login")
+@login_required
+def kite_login():
+    return redirect(kite.login_url())
+
+@app.route("/kite/callback")
+@login_required
+def kite_callback():
+    global kite_access_token, kite, kite_instruments
+    request_token = request.args.get("request_token")
+    if request_token:
+        try:
+            data = kite.generate_session(request_token, api_secret=KITE_API_SECRET)
+            kite.set_access_token(data["access_token"])
+            kite_access_token = data["access_token"]
+            
+            logger.info("Downloading Kite NFO instruments...")
+            instruments_list = kite.instruments(exchange=kite.EXCHANGE_NFO)
+            kite_instruments = [i for i in instruments_list if i["segment"] == "NFO-OPT"]
+            logger.info(f"Loaded {len(kite_instruments)} NFO-OPT instruments.")
+
+            return redirect(url_for("dashboard"))
+        except Exception as e:
+            logger.error(f"Kite login failed: {e}")
+            return f"Failed to log in to Kite: {e}"
+    return "Error: no Request Token provided."
+
 
 @app.route("/api/option_chain/<symbol>")
 @login_required
 def api_option_chain(symbol):
-    """Synthesize an option chain (ATM +/- 2 strikes) for a symbol."""
     price = None
     for s in current_signals:
         if s["symbol"] == symbol:
@@ -260,6 +294,66 @@ def api_option_chain(symbol):
             
     if not price:
         return jsonify({"error": f"Symbol {symbol} not found or no data"}), 404
+
+    global kite, kite_access_token, kite_instruments
+    
+    if kite_access_token and kite_instruments:
+        try:
+            underlying_name = "NIFTY" if symbol == "^NSEI" else ("BANKNIFTY" if symbol == "^NSEBANK" else symbol)
+            symbol_instruments = [i for i in kite_instruments if i["name"] == underlying_name]
+            
+            if symbol_instruments:
+                expiries = sorted(list(set([i["expiry"] for i in symbol_instruments])))
+                nearest_expiry = expiries[0]
+
+                nearest_instruments = [i for i in symbol_instruments if i["expiry"] == nearest_expiry]
+                strikes = sorted(list(set([i["strike"] for i in nearest_instruments])))
+                
+                atm_strike = min(strikes, key=lambda x: abs(x - float(price)))
+                
+                atm_idx = strikes.index(atm_strike)
+                start_idx = max(0, atm_idx - 2)
+                end_idx = min(len(strikes), atm_idx + 3)
+                selected_strikes = strikes[start_idx:end_idx]
+
+                selected_instruments = [i for i in nearest_instruments if i["strike"] in selected_strikes]
+                trading_symbols = [f"NFO:{i['tradingsymbol']}" for i in selected_instruments]
+                
+                quotes = kite.quote(trading_symbols)
+
+                chain = []
+                from datetime import datetime
+                for k in selected_strikes:
+                    ce_inst = next((i for i in selected_instruments if i["strike"] == k and i["instrument_type"] == "CE"), None)
+                    pe_inst = next((i for i in selected_instruments if i["strike"] == k and i["instrument_type"] == "PE"), None)
+                    
+                    ce_quote = quotes.get(f"NFO:{ce_inst['tradingsymbol']}", {}) if ce_inst else {}
+                    pe_quote = quotes.get(f"NFO:{pe_inst['tradingsymbol']}", {}) if pe_inst else {}
+                    
+                    chain.append({
+                        "strike": k,
+                        "call": {
+                            "price": ce_quote.get("last_price", 0), 
+                            "delta": 0,
+                            "iv": round(ce_quote.get("oi", 0) / 1000, 1) if ce_quote.get("oi", 0) else 0
+                        },
+                        "put": {
+                            "price": pe_quote.get("last_price", 0), 
+                            "delta": 0, 
+                            "iv": round(pe_quote.get("oi", 0) / 1000, 1) if pe_quote.get("oi", 0) else 0
+                        }
+                    })
+
+                return jsonify({
+                    "symbol": symbol,
+                    "spot_price": price,
+                    "expiry": nearest_expiry,
+                    "chain": chain,
+                    "is_live_kite": True
+                })
+        except Exception as e:
+            logger.error(f"Kite option chain error for {symbol}: {e}")
+            pass
 
     if price < 500: step = 5
     elif price < 1000: step = 10
@@ -289,8 +383,9 @@ def api_option_chain(symbol):
     return jsonify({
         "symbol": symbol,
         "spot_price": price,
-        "expiry": "Next Expiry (7 Days)",
-        "chain": chain
+        "expiry": "Next Expiry (SYNTH)",
+        "chain": chain,
+        "auth_required": not kite_access_token
     })
 
 
