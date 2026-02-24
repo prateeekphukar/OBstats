@@ -329,8 +329,10 @@
             <a href="/" class="nav-logo"><span>⚡</span> AI Signal Engine</a>
             <div class="nav-links">
                 <a href="/">Dashboard</a>
-                <a href="/pricing">Pricing</a>
-                <a href="/blog">Blog</a>
+                <a href="/oi-data">OI Data</a>
+                <a href="/delivery-data">Delivery</a>
+                <a href="/oi-change">OI Analysis</a>
+                <a href="/fii-dii">FII/DII</a>
                 <a href="/profile" class="active">Profile</a>
                 <a href="/logout">Logout</a>
             </div>
@@ -409,7 +411,7 @@
                 </div>
                 <div class="info-row">
                     <div class="label">Member Since</div>
-                    <div class="value">{{ user.created_at.strftime('%d %b %Y') }}</div>
+                    <div class="value">{{ user.created_at.strftime('%d %b %Y') if user.created_at else 'N/A' }}</div>
                 </div>
                 <div class="info-row">
                     <div class="label">Auth Method</div>
