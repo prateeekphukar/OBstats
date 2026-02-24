@@ -1,219 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Delivery Data — AI Signal Engine</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
-        rel="stylesheet">
+    <title>Delivery Data &mdash; OBstats</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-primary: #020617;
-            --bg-card: rgba(30, 41, 59, 0.5);
-            --border: rgba(255, 255, 255, 0.1);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent-blue: #6366f1;
-            --green: #10b981;
-            --red: #ef4444;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-        }
-
-        nav {
-            background: rgba(2, 6, 23, 0.8);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border);
-            padding: 12px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-            margin-left: 20px;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover,
-        .nav-links a.active {
-            color: white;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-
-        h2 {
-            font-size: 28px;
-            margin-bottom: 24px;
-            font-weight: 700;
-        }
-
-        .table-container {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            overflow: hidden;
-            backdrop-filter: blur(12px);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th {
-            padding: 16px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 600;
-            border-bottom: 1px solid var(--border);
-            background: rgba(0, 0, 0, 0.2);
-        }
-
-        td {
-            padding: 16px;
-            font-size: 14px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
-            font-family: 'JetBrains Mono', monospace;
-            vertical-align: middle;
-        }
-
-        tr:hover td {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .symbol-col {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 16px;
-            color: white;
-        }
-
-        .progress-bg {
-            background: rgba(255, 255, 255, 0.1);
-            width: 150px;
-            height: 8px;
-            border-radius: 4px;
-            overflow: hidden;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 10px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--green);
-            border-radius: 4px;
-        }
+        :root { --bg: #0b0f19; --card: #141a2a; --border: #1e293b; --text: #e2e8f0; --muted: #64748b; --green: #22c55e; --red: #ef4444; --blue: #6366f1; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        nav { background: rgba(11,15,25,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 14px 0; position: sticky; top: 0; z-index: 100; }
+        .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight: 800; font-size: 15px; }
+        .nav-brand span { background: linear-gradient(135deg, #6366f1, #8b5cf6); width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .nav-links { display: flex; gap: 6px; }
+        .nav-links a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; }
+        .nav-links a:hover { color: white; background: rgba(255,255,255,0.05); }
+        .nav-links a.active { color: white; background: rgba(99,102,241,0.15); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+        h2 { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+        .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 14px 20px; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); text-align: left; }
+        td { padding: 16px 20px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        td.mono { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+        td.symbol { font-weight: 700; font-size: 15px; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .progress-bg { background: rgba(255,255,255,0.08); width: 120px; height: 6px; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        .progress-fill { height: 100%; border-radius: 3px; }
+        .updated { text-align: center; padding: 16px; font-size: 11px; color: var(--muted); }
     </style>
 </head>
-
 <body>
-    <nav>
-        <div class="nav-inner">
-            <a href="/"
-                style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; font-weight: 800; font-size: 15px;">
-                <span
-                    style="background: linear-gradient(135deg, #6366f1, #8b5cf6); width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px;">⚡</span>
-                AI Signal Engine
-            </a>
-            <div class="nav-links">
-                <a href="/">Dashboard</a>
-                <a href="/oi-data">OI Data</a>
-                <a href="/delivery-data" class="active">Delivery</a>
-                <a href="/oi-change">OI Analysis</a>
-                <a href="/profile">Profile</a>
-            </div>
+    <nav><div class="nav-inner">
+        <a class="nav-brand" href="/"><span>&#9889;</span>OBstats</a>
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/oi-data">OI Data</a>
+            <a href="/delivery-data" class="active">Delivery</a>
+            <a href="/oi-change">OI Analysis</a>
+            <a href="/fii-dii">FII/DII</a>
+            <a href="/profile">Profile</a>
+            <a href="/logout">Logout</a>
         </div>
-    </nav>
-
+    </div></nav>
     <main class="container">
-        <h2>📦 Stock Delivery Percentage</h2>
-        <div class="table-container">
+        <h2>Stock Delivery Data</h2>
+        <div class="table-wrap">
             <table>
-                <thead>
-                    <tr>
-                        <th>Symbol</th>
-                        <th>LTP</th>
-                        <th>Traded Qty</th>
-                        <th>Deliverable Qty</th>
-                        <th>Delivery %</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <tr>
-                        <td colspan="5"
-                            style="text-align: center; padding: 40px; color: var(--text-secondary); font-family: 'Outfit';">
-                            Loading live data...</td>
-                    </tr>
-                </tbody>
+                <thead><tr><th>Symbol</th><th>LTP</th><th>Traded Qty</th><th>Delivered Qty</th><th>Delivery %</th></tr></thead>
+                <tbody id="tableBody"><tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted);">Loading...</td></tr></tbody>
             </table>
         </div>
+        <div class="updated" id="lastUpdated"></div>
     </main>
-
     <script>
         async function fetchData() {
             try {
-                const resp = await fetch('/api/market-data');
-                const data = await resp.json();
+                const r = await fetch('/api/market-data');
+                const data = await r.json();
                 const tbody = document.getElementById('tableBody');
                 let html = '';
-
-                // Sort by Delivery Pct descending
-                const stocks = Object.entries(data.stocks)
-                    .map(([sym, info]) => ({ sym, info }))
-                    .sort((a, b) => (b.info.delivery?.delivery_pct || 0) - (a.info.delivery?.delivery_pct || 0));
-
-                stocks.forEach(({ sym, info }) => {
-                    if (!info.delivery) return;
-                    const deliv = info.delivery;
-                    const pct = deliv.delivery_pct || 0;
-                    const color = pct >= 50 ? 'var(--green)' : pct <= 20 ? 'var(--red)' : '#6366f1';
-
-                    html += `<tr>
-                        <td class="symbol-col">${sym}</td>
-                        <td>₹${info.ltp.toFixed(2)}</td>
-                        <td>${deliv.traded_qty.toLocaleString('en-IN')}</td>
-                        <td>${deliv.delivery_qty.toLocaleString('en-IN')}</td>
-                        <td>
-                            <div class="progress-bg"><div class="progress-fill" style="width: ${pct}%; background: ${color}"></div></div>
-                            <strong style="color: ${color}">${pct.toFixed(2)}%</strong>
-                        </td>
-                    </tr>`;
+                const stocks = Object.entries(data.stocks).map(([sym,info])=>({sym,info})).sort((a,b)=>(b.info.delivery?.delivery_pct||0)-(a.info.delivery?.delivery_pct||0));
+                stocks.forEach(({sym,info})=>{
+                    if(!info.delivery) return;
+                    const d = info.delivery;
+                    const pct = d.delivery_pct || 0;
+                    const color = pct>=50?'var(--green)':pct<=20?'var(--red)':'#6366f1';
+                    html += '<tr><td class="symbol">'+sym+'</td><td class="mono">&#8377;'+info.ltp.toFixed(2)+'</td><td class="mono">'+d.traded_qty.toLocaleString("en-IN")+'</td><td class="mono">'+d.delivery_qty.toLocaleString("en-IN")+'</td><td><div class="progress-bg"><div class="progress-fill" style="width:'+pct+'%; background:'+color+'"></div></div><strong class="mono" style="color:'+color+'">'+pct.toFixed(1)+'%</strong></td></tr>';
                 });
-
-                if (html === '') html = '<tr><td colspan="5" style="text-align: center;">No data available</td></tr>';
-                tbody.innerHTML = html;
-            } catch (e) { console.error(e); }
+                if(!html) html='<tr><td colspan="5" style="text-align:center;">No data available</td></tr>';
+                tbody.innerHTML=html;
+                if(data.last_fetch) document.getElementById('lastUpdated').textContent='Last updated: '+data.last_fetch;
+            } catch(e){console.error(e);}
         }
-        fetchData();
-        setInterval(fetchData, 60000);
+        fetchData(); setInterval(fetchData,60000);
     </script>
 </body>
-
 </html>

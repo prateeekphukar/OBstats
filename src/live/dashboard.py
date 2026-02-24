@@ -279,6 +279,22 @@ def kite_callback():
     return "Error: no Request Token provided."
 
 
+
+@app.route("/fii-dii")
+@login_required
+def fii_dii_page():
+    return render_template("fii_dii.html")
+
+
+@app.route("/api/fii-dii")
+@login_required
+def api_fii_dii():
+    return jsonify({
+        "data": data_fetcher.get_fii_dii_data(),
+        "last_fetch": data_fetcher.last_fetch_time,
+    })
+
+
 @app.route("/api/option_chain/<symbol>")
 @login_required
 def api_option_chain(symbol):

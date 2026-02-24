@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FII/DII Activity &mdash; OBstats</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0b0f19; --card: #141a2a; --border: #1e293b; --text: #e2e8f0; --muted: #64748b; --green: #22c55e; --red: #ef4444; --blue: #6366f1; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        nav { background: rgba(11,15,25,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 14px 0; position: sticky; top: 0; z-index: 100; }
+        .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight: 800; font-size: 15px; }
+        .nav-brand span { background: linear-gradient(135deg, #6366f1, #8b5cf6); width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .nav-links { display: flex; gap: 6px; }
+        .nav-links a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; }
+        .nav-links a:hover { color: white; background: rgba(255,255,255,0.05); }
+        .nav-links a.active { color: white; background: rgba(99,102,241,0.15); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+        h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+        .cards-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; }
+        .stat-card .label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .stat-card .value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; }
+        .stat-card .date { font-size: 11px; color: var(--muted); margin-top: 6px; }
+        .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 14px 20px; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); text-align: left; }
+        td { padding: 16px 20px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        td.mono { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .cat-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+        .cat-badge.fii { background: rgba(99,102,241,0.15); color: #818cf8; }
+        .cat-badge.dii { background: rgba(34,197,94,0.12); color: #4ade80; }
+        .updated { text-align: center; padding: 16px; font-size: 11px; color: var(--muted); }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="/"><span>&#9889;</span>OBstats</a>
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/oi-data">OI Data</a>
+                <a href="/delivery-data">Delivery</a>
+                <a href="/oi-change">OI Analysis</a>
+                <a href="/fii-dii" class="active">FII/DII</a>
+                <a href="/profile">Profile</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+    <main class="container">
+        <h2>FII / DII Activity</h2>
+        <p class="subtitle">Daily institutional investor trading activity from NSE</p>
+        <div class="cards-row" id="summaryCards"></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Category</th><th>Date</th><th>Buy Value (&#8377; Cr)</th><th>Sell Value (&#8377; Cr)</th><th>Net Value (&#8377; Cr)</th></tr></thead>
+                <tbody id="tableBody"><tr><td colspan="5" style="text-align:center; color:var(--muted); padding:40px;">Loading...</td></tr></tbody>
+            </table>
+        </div>
+        <div class="updated" id="lastUpdated"></div>
+    </main>
+    <script>
+        async function fetchData() {
+            try {
+                const r = await fetch('/api/fii-dii');
+                const json = await r.json();
+                const data = json.data || [];
+                const tbody = document.getElementById('tableBody');
+                const cards = document.getElementById('summaryCards');
+                let html = '', cardHtml = '';
+                data.forEach(item => {
+                    const net = parseFloat(item.netValue);
+                    const netColor = net >= 0 ? 'var(--green)' : 'var(--red)';
+                    const catClass = item.category === 'DII' ? 'dii' : 'fii';
+                    const catLabel = item.category === 'DII' ? 'DII' : 'FII/FPI';
+                    html += '<tr><td><span class="cat-badge '+catClass+'">'+catLabel+'</span></td><td>'+item.date+'</td><td class="mono">&#8377;'+(parseFloat(item.buyValue)).toLocaleString("en-IN",{maximumFractionDigits:2})+'</td><td class="mono">&#8377;'+(parseFloat(item.sellValue)).toLocaleString("en-IN",{maximumFractionDigits:2})+'</td><td class="mono" style="color:'+netColor+'">&#8377;'+net.toLocaleString("en-IN",{maximumFractionDigits:2})+'</td></tr>';
+                    cardHtml += '<div class="stat-card"><div class="label">'+catLabel+' Net</div><div class="value" style="color:'+netColor+'">&#8377;'+net.toLocaleString("en-IN",{maximumFractionDigits:2})+' Cr</div><div class="date">'+item.date+'</div></div>';
+                });
+                if (!html) html = '<tr><td colspan="5" style="text-align:center;">No data available</td></tr>';
+                tbody.innerHTML = html;
+                cards.innerHTML = cardHtml;
+                if (json.last_fetch) document.getElementById('lastUpdated').textContent = 'Last updated: ' + json.last_fetch;
+            } catch(e) { console.error(e); }
+        }
+        fetchData();
+        setInterval(fetchData, 60000);
+    </script>
+</body>
+</html>
